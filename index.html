@@ -1,0 +1,177 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta
+      name="description"
+      content="Manual accounting practice notebook for Journal, Ledger, Trial Balance and financial statements."
+    />
+    <title>LedgerDesk — Accounting Practice Notebook</title>
+    <link rel="stylesheet" href="./style.css" />
+  </head>
+  <body>
+    <header class="app-header">
+      <div class="brand-wrap">
+        <div class="brand-mark" aria-hidden="true">
+          <a href="https://pankajkumardev.online/" target="_blank">PK.</a>
+        </div>
+        <div>
+          <h1>LedgerDesk</h1>
+          <p>Accounting Practice Notebook</p>
+        </div>
+      </div>
+      <div class="header-info">
+        <div class="business-mini">
+          <span id="headerBusiness">Untitled Business</span>
+          <span id="headerPeriod">No accounting period</span>
+        </div>
+        <span id="saveStatus" class="save-status" aria-live="polite"
+          >Saved</span
+        >
+      </div>
+    </header>
+
+    <nav class="main-nav" aria-label="Accounting sections">
+      <button class="nav-item active" data-section="journal">Journal</button>
+      <button class="nav-item" data-section="ledger">Ledger</button>
+      <button class="nav-item" data-section="trialBalance">
+        Trial Balance
+      </button>
+      <button class="nav-item" data-section="trading">Trading Account</button>
+      <button class="nav-item" data-section="profitLoss">
+        Profit &amp; Loss
+      </button>
+      <button class="nav-item" data-section="balanceSheet">
+        Balance Sheet
+      </button>
+    </nav>
+
+    <main class="app-shell">
+      <button
+        class="sidebar-toggle"
+        id="sidebarToggle"
+        type="button"
+        aria-label="Hide sidebar"
+        title="Hide sidebar"
+      >
+        <span class="toggle-track">
+          <span class="toggle-thumb"></span>
+        </span>
+      </button>
+      <aside class="sidebar">
+        <section class="side-panel identity-panel">
+          <div class="panel-heading">
+            <span>Practice File</span>
+          </div>
+          <label class="compact-field">
+            <span>Business Name</span>
+            <input
+              id="businessName"
+              type="text"
+              autocomplete="organization"
+              placeholder="Business name"
+            />
+          </label>
+          <label class="compact-field">
+            <span>Accounting Period</span>
+            <input
+              id="accountingPeriod"
+              type="text"
+              placeholder="01/04/2026 – 31/03/2027"
+            />
+          </label>
+        </section>
+
+        <section class="side-panel guide-panel">
+          <div class="panel-heading"><span>Notebook</span></div>
+          <p>
+            Enter every accounting item manually. Ledger postings and statements
+            are intentionally independent.
+          </p>
+          <div class="rules-list">
+            <span>Inline editing</span>
+            <span>Autosaved locally</span>
+            <span>No calculations</span>
+          </div>
+        </section>
+
+        <section class="side-panel utility-panel">
+          <div class="panel-heading"><span>Utilities</span></div>
+          <button class="side-action" id="printCurrent">
+            Print Current Section
+          </button>
+          <button class="side-action danger-text" id="deleteAllData">
+            Delete All Data
+          </button>
+        </section>
+      </aside>
+
+      <section class="workspace">
+        <div class="workspace-topline">
+          <div>
+            <div class="eyebrow">MANUAL PRACTICE</div>
+            <h2 id="sectionTitle">Journal</h2>
+            <p id="sectionDescription">
+              Record complete journal entries with flexible debit and credit
+              lines.
+            </p>
+          </div>
+          <div id="sectionActions" class="section-actions"></div>
+        </div>
+
+        <div id="content" class="content-area"></div>
+      </section>
+    </main>
+
+    <div id="menuLayer" class="menu-layer"></div>
+
+    <dialog id="confirmDialog" class="confirm-dialog">
+      <div class="dialog-body">
+        <div class="dialog-icon">!</div>
+        <div>
+          <h3 id="confirmTitle">Delete this item?</h3>
+          <p id="confirmMessage">This action cannot be undone.</p>
+        </div>
+      </div>
+      <div class="dialog-actions">
+        <button class="button secondary" id="confirmCancel">Cancel</button>
+        <button class="button danger" id="confirmProceed">Delete</button>
+      </div>
+    </dialog>
+
+    <div
+      id="mobileExperienceNotice"
+      class="mobile-experience-notice"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="mobileNoticeTitle"
+    >
+      <div class="mobile-notice-card">
+        <div class="mobile-notice-mark">PK.</div>
+
+        <div class="mobile-notice-content">
+          <span class="mobile-notice-label">BETTER EXPERIENCE</span>
+
+          <h2 id="mobileNoticeTitle">
+            LedgerDesk works best on a larger screen
+          </h2>
+
+          <p>
+            For the best accounting practice experience, use a tablet or
+            desktop. You can also rotate your phone to landscape mode for a
+            wider workspace.
+          </p>
+        </div>
+
+        <div class="mobile-notice-actions">
+          <button type="button" class="button" id="mobileNoticeContinue">
+            Continue Anyway
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <script src="./script.js" defer></script>
+  </body>
+</html>
