@@ -454,6 +454,22 @@ function renderJournal() {
           `
       }
 
+      ${
+        entries.length
+          ? `
+            <div class="add-row-strip">
+              <button
+                class="add-row-button"
+                type="button"
+                data-action="add-journal-entry"
+              >
+                + Add Journal Entry
+              </button>
+            </div>
+          `
+          : ""
+      }
+
     </div>
   `;
 }
