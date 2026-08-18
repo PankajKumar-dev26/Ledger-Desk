@@ -1208,6 +1208,83 @@ input:focus-visible {
   border-top: 1px solid var(--line);
 }
 
+.print-session-container {
+  display: none;
+}
+
+@media print {
+  body > *:not(#print-session-container) {
+    display: none !important;
+  }
+
+  #print-session-container {
+    display: block !important;
+    width: 100%;
+  }
+
+  .print-session-section {
+    display: block;
+    width: 100%;
+    break-after: page;
+    page-break-after: always;
+  }
+
+  .print-session-section:last-child {
+    break-after: auto;
+    page-break-after: auto;
+  }
+
+  .print-session-heading {
+    display: grid;
+    grid-template-columns: 1fr auto 1fr;
+    align-items: center;
+    gap: 16px;
+
+    margin-bottom: 20px;
+    padding-bottom: 10px;
+
+    border-bottom: 1px solid #000;
+  }
+
+  .print-business-name {
+    text-align: left;
+    font-weight: 600;
+  }
+
+  .print-session-title {
+    text-align: center;
+    font-weight: 700;
+  }
+
+  .print-accounting-period {
+    text-align: right;
+  }
+
+  .print-session-section .paper,
+  .print-session-section .ledger-card,
+  .print-session-section .double-table {
+    break-inside: avoid;
+  }
+
+  .print-session-section .empty-state,
+  .print-session-section .add-row-strip,
+  .print-session-section .entry-toolbar,
+  .print-session-section .entry-menu-button,
+  .print-session-section .line-action,
+  .print-session-section .line-menu,
+  .print-session-section .icon-button,
+  .print-session-section button {
+    display: none !important;
+  }
+
+  .print-session-section input {
+    border: none !important;
+    outline: none !important;
+    background: transparent !important;
+    box-shadow: none !important;
+  }
+}
+
 /* =========================
    RESPONSIVE
 ========================= */
