@@ -123,6 +123,34 @@ function emptyStatementRow() {
   };
 }
 
+function createPairedLedgerRows(ledger) {
+  const difference = ledger.debit.length - ledger.credit.length;
+
+  if (difference > 0) {
+    for (let i = 0; i < difference; i++) {
+      ledger.credit.push(emptyLedgerLine());
+    }
+  } else if (difference < 0) {
+    for (let i = 0; i < Math.abs(difference); i++) {
+      ledger.debit.push(emptyLedgerLine());
+    }
+  }
+}
+
+function createPairedStatementRows(statement) {
+  const difference = statement.left.length - statement.right.length;
+
+  if (difference > 0) {
+    for (let i = 0; i < difference; i++) {
+      statement.right.push(emptyStatementRow());
+    }
+  } else if (difference < 0) {
+    for (let i = 0; i < Math.abs(difference); i++) {
+      statement.left.push(emptyStatementRow());
+    }
+  }
+}
+
 function clone(value) {
   return JSON.parse(JSON.stringify(value));
 }
@@ -138,7 +166,6 @@ function loadState() {
 
     const parsed = JSON.parse(saved);
     const normalized = normalizeState(parsed);
-
 
     return normalized;
   } catch (error) {
@@ -190,12 +217,18 @@ function normalizeState(parsed) {
         : String(entry.narration),
   }));
 
-  result.ledgers = result.ledgers.map((ledger) => ({
-    id: ledger.id || createId(),
-    name: String(ledger.name ?? ""),
-    debit: normalizeLedgerRows(ledger.debit),
-    credit: normalizeLedgerRows(ledger.credit),
-  }));
+  result.ledgers = result.ledgers.map((ledger) => {
+    const normalizedLedger = {
+      id: ledger.id || createId(),
+      name: String(ledger.name ?? ""),
+      debit: normalizeLedgerRows(ledger.debit),
+      credit: normalizeLedgerRows(ledger.credit),
+    };
+
+    createPairedLedgerRows(normalizedLedger);
+
+    return normalizedLedger;
+  });
 
   result.trialBalance = result.trialBalance.map((row) => ({
     id: row.id || createId(),
@@ -213,6 +246,8 @@ function normalizeState(parsed) {
       left: normalizeStatementRows(source.left),
       right: normalizeStatementRows(source.right),
     };
+
+    createPairedStatementRows(result[key]);
   }
 
   result.journal.forEach(normalizeJournalLineOrder);
@@ -815,6 +850,19 @@ function renderLedgerCard(ledger) {
 
       </div>
 
+      <div class="add-row-strip">
+
+        <button
+          class="add-row-button"
+          type="button"
+          data-action="add-ledger-row"
+          data-ledger-id="${ledger.id}"
+        >
+          + Add Row
+        </button>
+
+      </div>
+
     </article>
   `;
 }
@@ -938,20 +986,6 @@ function renderLedgerSide(ledger, side, title) {
 
       </div>
 
-      <div class="add-row-strip">
-
-        <button
-          class="add-row-button"
-          type="button"
-          data-action="add-ledger-row"
-          data-ledger-id="${ledger.id}"
-          data-side="${side}"
-        >
-          + Add ${side === "debit" ? "Debit" : "Credit"} Entry
-        </button>
-
-      </div>
-
     </div>
   `;
 }
@@ -972,15 +1006,20 @@ function addLedgerRow(ledgerId, side) {
 
   if (!ledger) return;
 
-  const row = emptyLedgerLine();
+  const clickedRow = emptyLedgerLine();
+  const pairedRow = emptyLedgerLine();
 
-  ledger[side].push(row);
+  ledger[side].push(clickedRow);
+
+  const oppositeSide = side === "debit" ? "credit" : "debit";
+
+  ledger[oppositeSide].push(pairedRow);
 
   saveState();
   renderLedger();
 
   focusSelector(
-    `[data-model="ledger-line"][data-ledger-id="${ledgerId}"][data-side="${side}"][data-row-id="${row.id}"][data-field="date"]`,
+    `[data-model="ledger-line"][data-ledger-id="${ledgerId}"][data-side="${side}"][data-row-id="${clickedRow.id}"][data-field="date"]`,
   );
 }
 
@@ -1154,23 +1193,13 @@ function renderDoubleStatement(key, title) {
         <div class="double-add">
 
           <button
-            class="add-row-button left-add"
+            class="add-row-button"
             type="button"
             data-action="add-statement-row"
             data-side="left"
             data-target="${key}"
           >
-            + Add Left Row
-          </button>
-
-          <button
-            class="add-row-button right-add"
-            type="button"
-            data-action="add-statement-row"
-            data-side="right"
-            data-target="${key}"
-          >
-            + Add Right Row
+            + Add Row
           </button>
 
         </div>
@@ -1265,9 +1294,18 @@ function renderBalanceSheet() {
 }
 
 function addStatementRow(key, side) {
-  const row = emptyStatementRow();
+  const statement = state[key];
 
-  state[key][side].push(row);
+  if (!statement) return;
+
+  const clickedRow = emptyStatementRow();
+  const pairedRow = emptyStatementRow();
+
+  statement[side].push(clickedRow);
+
+  const oppositeSide = side === "left" ? "right" : "left";
+
+  statement[oppositeSide].push(pairedRow);
 
   saveState();
 
@@ -1278,7 +1316,7 @@ function addStatementRow(key, side) {
   }
 
   focusSelector(
-    `[data-model="statement"][data-target="${key}"][data-side="${side}"][data-row-id="${row.id}"][data-field="particulars"]`,
+    `[data-model="statement"][data-target="${key}"][data-side="${side}"][data-row-id="${clickedRow.id}"][data-field="particulars"]`,
   );
 }
 
@@ -1576,8 +1614,7 @@ function openMenu(type, data, anchor) {
 
   if (type === "ledger") {
     add("Edit Ledger Name", "edit");
-    add("Add Debit Entry", "add-debit");
-    add("Add Credit Entry", "add-credit");
+    add("Add Row", "add-row");
 
     separator();
 
@@ -1587,8 +1624,6 @@ function openMenu(type, data, anchor) {
 
   if (type === "ledger-line") {
     add("Edit Row", "edit");
-    add("Insert Above", "above");
-    add("Insert Below", "below");
     add("Move Up", "up");
     add("Move Down", "down");
 
@@ -1611,8 +1646,6 @@ function openMenu(type, data, anchor) {
 
   if (type === "statement-row") {
     add("Edit", "edit");
-    add("Insert Above", "above");
-    add("Insert Below", "below");
     add("Move Up", "up");
     add("Move Down", "down");
 
@@ -1792,13 +1825,8 @@ function handleMenuAction(type, action, data) {
       return;
     }
 
-    if (action === "add-debit") {
+    if (action === "add-row") {
       addLedgerRow(ledger.id, "debit");
-      return;
-    }
-
-    if (action === "add-credit") {
-      addLedgerRow(ledger.id, "credit");
       return;
     }
 
@@ -2169,7 +2197,7 @@ function handleAction(event) {
       break;
 
     case "add-ledger-row":
-      addLedgerRow(button.dataset.ledgerId, button.dataset.side);
+      addLedgerRow(button.dataset.ledgerId, "debit");
       break;
 
     case "add-tb-row":
@@ -2329,8 +2357,220 @@ document
 
 document.getElementById("printCurrent").addEventListener("click", () => {
   closeMenu();
+
+  const wasSidebarHidden = appShell.classList.contains("sidebar-hidden");
+
+  appShell.classList.add("sidebar-hidden");
+
+  const restoreSidebar = () => {
+    if (!wasSidebarHidden) {
+      appShell.classList.remove("sidebar-hidden");
+    }
+
+    window.removeEventListener("afterprint", restoreSidebar);
+  };
+
+  window.addEventListener("afterprint", restoreSidebar);
+
   window.print();
 });
+
+/* =========================
+   PRINT ALL CURRENT SESSION
+========================= */
+
+function hasJournalData() {
+  return state.journal.some((entry) => {
+    return (
+      entry.date.trim() ||
+      entry.lf.trim() ||
+      entry.narration?.trim() ||
+      entry.lines.some(
+        (line) => line.account.trim() || line.lf.trim() || line.amount.trim(),
+      )
+    );
+  });
+}
+
+function hasLedgerData() {
+  return state.ledgers.some((ledger) => {
+    return (
+      ledger.name.trim() ||
+      ledger.debit.some(
+        (row) =>
+          row.date.trim() ||
+          row.particulars.trim() ||
+          row.jf.trim() ||
+          row.amount.trim(),
+      ) ||
+      ledger.credit.some(
+        (row) =>
+          row.date.trim() ||
+          row.particulars.trim() ||
+          row.jf.trim() ||
+          row.amount.trim(),
+      )
+    );
+  });
+}
+
+function hasTrialBalanceData() {
+  return state.trialBalance.some(
+    (row) =>
+      row.account.trim() ||
+      row.lf.trim() ||
+      row.debit.trim() ||
+      row.credit.trim(),
+  );
+}
+
+function hasStatementData(statement) {
+  return (
+    statement.left.some((row) => row.particulars.trim() || row.amount.trim()) ||
+    statement.right.some((row) => row.particulars.trim() || row.amount.trim())
+  );
+}
+
+function getUsedSections() {
+  const usedSections = [];
+
+  if (hasJournalData()) {
+    usedSections.push("journal");
+  }
+
+  if (hasLedgerData()) {
+    usedSections.push("ledger");
+  }
+
+  if (hasTrialBalanceData()) {
+    usedSections.push("trialBalance");
+  }
+
+  if (hasStatementData(state.trading)) {
+    usedSections.push("trading");
+  }
+
+  if (hasStatementData(state.profitLoss)) {
+    usedSections.push("profitLoss");
+  }
+
+  if (hasStatementData(state.balanceSheet)) {
+    usedSections.push("balanceSheet");
+  }
+
+  return usedSections;
+}
+
+function printAllCurrentSession() {
+  closeMenu();
+
+  const usedSections = getUsedSections();
+
+  if (!usedSections.length) {
+    alert("There is no accounting data to print.");
+    return;
+  }
+
+  const originalSection = state.activeSection;
+
+  const wasSidebarHidden = appShell.classList.contains("sidebar-hidden");
+
+  const originalContent = content.innerHTML;
+  const originalTitle = sectionTitle.textContent;
+  const originalDescription = sectionDescription.textContent;
+
+  appShell.classList.add("sidebar-hidden");
+
+  const printContainer = document.createElement("div");
+
+  printContainer.id = "print-session-container";
+  printContainer.className = "print-session-container";
+
+  document.body.appendChild(printContainer);
+
+  usedSections.forEach((section) => {
+    state.activeSection = section;
+
+    let html = "";
+
+    if (section === "journal") {
+      renderJournal();
+
+      html = content.innerHTML;
+    } else if (section === "ledger") {
+      renderLedger();
+
+      html = content.innerHTML;
+    } else if (section === "trialBalance") {
+      renderTrialBalance();
+
+      html = content.innerHTML;
+    } else if (section === "trading") {
+      renderDoubleStatement("trading", "Trading Account");
+
+      html = content.innerHTML;
+    } else if (section === "profitLoss") {
+      renderDoubleStatement("profitLoss", "Profit & Loss Account");
+
+      html = content.innerHTML;
+    } else if (section === "balanceSheet") {
+      renderBalanceSheet();
+
+      html = content.innerHTML;
+    }
+
+    const sectionWrapper = document.createElement("section");
+
+    sectionWrapper.className = "print-session-section";
+    sectionWrapper.dataset.section = section;
+
+    sectionWrapper.innerHTML = `
+      <div class="print-session-heading">
+        <div class="print-business-name">
+          ${esc(state.businessName || "Untitled Business")}
+        </div>
+
+        <div class="print-session-title">
+          ${esc(sectionMeta[section].title)}
+        </div>
+
+        <div class="print-accounting-period">
+          ${esc(state.accountingPeriod || "No accounting period")}
+        </div>
+      </div>
+
+      ${html}
+    `;
+
+    printContainer.appendChild(sectionWrapper);
+  });
+
+  state.activeSection = originalSection;
+
+  content.innerHTML = originalContent;
+  sectionTitle.textContent = originalTitle;
+  sectionDescription.textContent = originalDescription;
+
+  window.addEventListener(
+    "afterprint",
+    () => {
+      printContainer.remove();
+
+      if (!wasSidebarHidden) {
+        appShell.classList.remove("sidebar-hidden");
+      }
+
+      render();
+    },
+    { once: true },
+  );
+
+  window.print();
+}
+
+document
+  .getElementById("printAllCurrentSession")
+  .addEventListener("click", printAllCurrentSession);
 
 /* =========================
    DELETE ALL
