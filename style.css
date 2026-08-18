@@ -60,6 +60,10 @@ input:focus-visible {
 ========================= */
 
 .app-header {
+  position: sticky;
+  top: 0;
+  z-index: 1100;
+
   min-height: 68px;
   background: var(--paper);
   border-bottom: 1px solid var(--line);
@@ -164,6 +168,10 @@ input:focus-visible {
 ========================= */
 
 .main-nav {
+  position: sticky;
+  top: 68px;
+  z-index: 1000;
+
   background: var(--paper);
   border-bottom: 1px solid var(--line);
   display: flex;
